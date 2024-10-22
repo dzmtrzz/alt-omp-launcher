@@ -31,6 +31,22 @@ from PyQt5 import QtWidgets, QtGui, QtCore, QtTest, uic
 import sys
 import requests
 import resources_rc
+from pathlib import Path
+
+home = Path.home()
+
+with open(home / "Documents" / "GTA San Andreas User Files" / "launcher-settings.txt") as f:
+    data = f.read().replace('\n', '')
+
+data = [i.split('=') for i in data.split(';')]
+
+for i in data:
+    if i[0] == 'gamepath':
+        gamepath = i[1]
+    elif i[0] == 'omppath':
+        omppath = i[1]
+    elif i[0] == 'username':
+        username = i[1]
 
 
 class Ui(QtWidgets.QMainWindow):
@@ -487,27 +503,10 @@ class Ui(QtWidgets.QMainWindow):
     def on_double_clicked_row(self, item):
         if item.column() == 0:  # Clicked on a row in the "IP Address" column
             cell_content = item.data()
-
+            server_ip = str(cell_content).split(':')[0]
+            server_port = str(cell_content).split(':')[1]
             if len(cell_content):
-                try:
-                    import winreg
-
-                    registry = winreg.ConnectRegistry(
-                        None, winreg.HKEY_LOCAL_MACHINE)
-                except ImportError:
-                    return
-                except Exception:
-                    return
-
-                reg_keypath = (
-                    r'SOFTWARE\Classes\samp')
-
-                try:
-                    winreg.OpenKey(registry, reg_keypath)
-                except FileNotFoundError:
-                    return
-
-                QtCore.QProcess.execute(f"explorer samp://{cell_content}")
+                QtCore.QProcess.execute(f"{omppath} -h {server_ip} -p {server_port} -n {username} -g {gamepath}")
 
     def on_clicked_button_refresh(self):
         self.pushButtonRefresh.setEnabled(False)
