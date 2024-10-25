@@ -28,30 +28,49 @@ Special Thanks to:
 """
 
 from PyQt5 import QtWidgets, QtGui, QtCore, QtTest, uic
+#from PyQt5.QtWidgets import QMessageBox
 import sys
 import requests
 import resources_rc
 from pathlib import Path
+import json
 
 home = Path.home()
 
-with open(home / "Documents" / "GTA San Andreas User Files" / "launcher-settings.txt") as f:
-    data = f.read().replace('\n', '')
+#favourites_list = ['91.218.67.206:7777']
 
-data = [i.split('=') for i in data.split(';')]
+errormsg = ''
 
-for i in data:
-    if i[0] == 'gamepath':
-        gamepath = i[1]
-    elif i[0] == 'omppath':
-        omppath = i[1]
-    elif i[0] == 'username':
-        username = i[1]
+try:
+    with open(home / "Documents" / "GTA San Andreas User Files" / "launcher-settings.json") as f:
+        data = json.load(f)
+        try:
+            if data['gamepath'] and data['omppath'] and data['username']:
+                pass
+        except Exception:
+            errormsg = 'Your settings are set incorrecly, you should have a json file called launcher-settings.json in your GTA User Files directory, which has gamepath, omppath, and username set.'
+ 
+except Exception as e:
+    errormsg = f"You do not have a config file! {e}"
+    pass
+
+
+try:
+    with open(home / "Documents" / "GTA San Andreas User Files" / "launcher-favourites.txt", "x") as f:
+        pass
+except FileExistsError:
+    pass
+
 
 
 class Ui(QtWidgets.QMainWindow):
     def __init__(self):
         super(Ui, self).__init__()
+
+        self.favourites_list = open(home / "Documents" / "GTA San Andreas User Files" / "launcher-favourites.txt", "r+") 
+        self.fake_favourites = self.favourites_list.read().split(',')
+        self.favourites_list.seek(0)
+
 
         # Load UI file from resources
         stream = QtCore.QFile(":/uiPrefix/form.ui")
@@ -87,6 +106,9 @@ class Ui(QtWidgets.QMainWindow):
 
         self.lineEdit.textChanged.connect(self.on_line_edit_changed)
 
+        self.checkBoxFavourites.stateChanged.connect(
+            self.on_favourites_check_box_state_changed)
+
         self.checkBoxOpenMpServers.stateChanged.connect(
             self.on_omp_check_box_state_changed)
 
@@ -100,10 +122,31 @@ class Ui(QtWidgets.QMainWindow):
         if detect_darkmode_in_windows():
             self.setThemeDarkMode()
 
-        if CHECK_FOR_UPDATES:
-            self.checkForUpdates()
+#        if CHECK_FOR_UPDATES:
+#            self.checkForUpdates()
 
         servers_count, players_count = self.loadServerList()
+
+        try:
+            self.fake_favourites.remove('')
+        except Exception:
+            pass
+        
+    
+        collist = self.get_full_column(0)
+        for i in self.fake_favourites:
+            if i not in collist:
+                self.addServer(
+                f"{i}",
+                "",
+                0,
+                0,
+                "",
+                "",
+                "",
+                False,
+                False)
+
 
         self.setLabelOnlineServersText(str(servers_count))
         self.setLabelOnlinePlayersText(str(players_count))
@@ -181,10 +224,22 @@ class Ui(QtWidgets.QMainWindow):
             item.setIcon(self.iconOpenMp)
             self.tableWidget.setVerticalHeaderItem(row, item)
 
-            if self.checkBoxOpenMpServers.isChecked():
-                self.tableWidget.setRowHidden(row, False)
+            if self.checkBoxFavourites.isChecked():
+                self.checkBoxOpenMpServers.setEnabled(False)
+                self.checkBoxSampServers.setEnabled(False)
+                self.lineEdit.setEnabled(False)
+                for row in range(self.tableWidget.rowCount()):
+                    item = self.tableWidget.item(row, 0)
+                    if item.text() in self.fake_favourites:
+                        self.tableWidget.setRowHidden(row, False)
+                    else:
+                        self.tableWidget.setRowHidden(row, True)
+            
             else:
-                self.tableWidget.setRowHidden(row, True)
+                if self.checkBoxOpenMpServers.isChecked():
+                    self.tableWidget.setRowHidden(row, False)
+                else:
+                    self.tableWidget.setRowHidden(row, True)
         else:
             item = QtWidgets.QTableWidgetItem("No")
             self.tableWidget.setItem(row, 7, item)
@@ -193,10 +248,22 @@ class Ui(QtWidgets.QMainWindow):
             item.setIcon(self.iconSamp)
             self.tableWidget.setVerticalHeaderItem(row, item)
 
-            if self.checkBoxSampServers.isChecked():
-                self.tableWidget.setRowHidden(row, False)
+            if self.checkBoxFavourites.isChecked():
+                self.checkBoxOpenMpServers.setEnabled(False)
+                self.checkBoxSampServers.setEnabled(False)
+                self.lineEdit.setEnabled(False)
+                for row in range(self.tableWidget.rowCount()):
+                    item = self.tableWidget.item(row, 0)
+                    if item.text() in self.fake_favourites:
+                        self.tableWidget.setRowHidden(row, False)
+                    else:
+                        self.tableWidget.setRowHidden(row, True)
+            
             else:
-                self.tableWidget.setRowHidden(row, True)
+                if self.checkBoxSampServers.isChecked():
+                    self.tableWidget.setRowHidden(row, False)
+                else:
+                    self.tableWidget.setRowHidden(row, True)
 
     def loadServerList(self) -> int:
         url = "https://api.open.mp/servers"
@@ -234,6 +301,7 @@ class Ui(QtWidgets.QMainWindow):
 
         json = response.json()
 
+
         for i in json:
             servers_count += 1
             players_count += i["pc"]
@@ -255,12 +323,14 @@ class Ui(QtWidgets.QMainWindow):
         if len(text) > 2:
             for row in range(self.tableWidget.rowCount()):
                 item = self.tableWidget.item(row, 7)
+
                 if (not self.checkBoxOpenMpServers.isChecked() and
                         item.text() == "Yes"):
                     continue
                 if (not self.checkBoxSampServers.isChecked() and
                         item.text() == "No"):
                     continue
+
 
                 for col in [0, 1, 3, 4, 5]:
                     item = self.tableWidget.item(row, col)
@@ -271,26 +341,30 @@ class Ui(QtWidgets.QMainWindow):
                         self.tableWidget.setRowHidden(row, False)
                         break
         else:
-            if self.checkBoxOpenMpServers.isChecked():
+            if self.checkBoxFavourites.isChecked() == False:
+                if self.checkBoxOpenMpServers.isChecked():
+                    for row in range(self.tableWidget.rowCount()):
+                        item = self.tableWidget.item(row, 7)
+                        if item.text() == "Yes":
+                            self.tableWidget.setRowHidden(row, False)
+                        else:
+                            if self.checkBoxSampServers.isChecked():
+                                self.tableWidget.setRowHidden(row, False)
+                            else:
+                                self.tableWidget.setRowHidden(row, True)
+            else:
+                self.checkBoxOpenMpServers.setEnabled(False)
+                self.checkBoxSampServers.setEnabled(False)
+                self.lineEdit.setEnabled(False)
                 for row in range(self.tableWidget.rowCount()):
-                    item = self.tableWidget.item(row, 7)
-                    if item.text() == "Yes":
+                    item = self.tableWidget.item(row, 0)
+                    if item.text() in self.fake_favourites:
                         self.tableWidget.setRowHidden(row, False)
                     else:
-                        if self.checkBoxSampServers.isChecked():
-                            self.tableWidget.setRowHidden(row, False)
-                        else:
-                            self.tableWidget.setRowHidden(row, True)
-            else:
-                for row in range(self.tableWidget.rowCount()):
-                    item = self.tableWidget.item(row, 7)
-                    if item.text() == "Yes":
                         self.tableWidget.setRowHidden(row, True)
-                    else:
-                        if self.checkBoxSampServers.isChecked():
-                            self.tableWidget.setRowHidden(row, False)
-                        else:
-                            self.tableWidget.setRowHidden(row, True)
+                    
+
+
 
     def checkForUpdates(self) -> None:
         """
@@ -505,8 +579,36 @@ class Ui(QtWidgets.QMainWindow):
             cell_content = item.data()
             server_ip = str(cell_content).split(':')[0]
             server_port = str(cell_content).split(':')[1]
+            if errormsg:
+                box = QtWidgets.QMessageBox()
+                box.setText(f"Error! {errormsg}")
+                box.exec_()
+            else:
+                try:
+                    if len(cell_content):
+                        QtCore.QProcess.execute(f"{data['omppath']} -h {server_ip} -p {server_port} -n {data['username']} -g {data['gamepath']}")
+                except Exception:
+                    box = QtWidgets.QMessageBox()
+                    box.setText('even i dont know what could cause this exception - dzmtrzz')
+                    box.exec_()
+        elif item.column() == 1: # Server name column
+            cell_content = item.data()
+            cell_content = item.model().data(item.model().index(item.row(), 0))
             if len(cell_content):
-                QtCore.QProcess.execute(f"{omppath} -h {server_ip} -p {server_port} -n {username} -g {gamepath}")
+                if cell_content not in self.fake_favourites:
+                    self.fake_favourites.append(cell_content)
+
+                elif cell_content in self.fake_favourites:
+                    self.fake_favourites.remove(cell_content)
+
+                temporary = ",".join(self.fake_favourites)
+
+                # write to file
+                self.favourites_list.seek(0)
+                self.favourites_list.write(temporary)
+                self.favourites_list.truncate()
+                self.favourites_list.flush()
+                self.filterRows('') # update list
 
     def on_clicked_button_refresh(self):
         self.pushButtonRefresh.setEnabled(False)
@@ -539,25 +641,72 @@ class Ui(QtWidgets.QMainWindow):
 
     def on_omp_check_box_state_changed(self):
         if self.checkBoxOpenMpServers.isChecked():
+            if self.checkBoxFavourites.isChecked():
+                pass
+            else:
+                for row in range(self.tableWidget.rowCount()):
+                    item = self.tableWidget.item(row, 7)
+                    if item.text() == "Yes":
+                        self.tableWidget.setRowHidden(row, False)
+                    else:
+                        if self.checkBoxSampServers.isChecked():
+                            self.tableWidget.setRowHidden(row, False)
+                        else:
+                            self.tableWidget.setRowHidden(row, True)
+        else:
+            if self.checkBoxFavourites.isChecked():
+                pass
+            else:
+                for row in range(self.tableWidget.rowCount()):
+                    item = self.tableWidget.item(row, 7)
+                    if item.text() == "Yes":
+                        self.tableWidget.setRowHidden(row, True)
+                    else:
+                        if self.checkBoxSampServers.isChecked():
+                            self.tableWidget.setRowHidden(row, False)
+                        else:
+                           self.tableWidget.setRowHidden(row, True)
+
+        # Check filter again
+        text = self.lineEdit.text()
+        if len(text) > 2:
+            self.filterRows(text)
+
+    def get_full_column(self, colnum):
+        myfunlist = []
+        for row in range(self.tableWidget.rowCount()):
+            myfunlist.append(self.tableWidget.item(row, colnum).text())
+        return myfunlist
+
+    def on_favourites_check_box_state_changed(self):
+        if self.checkBoxFavourites.isChecked():
+            self.checkBoxOpenMpServers.setEnabled(False)
+            self.checkBoxSampServers.setEnabled(False)
+            self.lineEdit.setEnabled(False)
             for row in range(self.tableWidget.rowCount()):
-                item = self.tableWidget.item(row, 7)
-                if item.text() == "Yes":
+                item = self.tableWidget.item(row, 0)
+                if item.text() in self.fake_favourites:
                     self.tableWidget.setRowHidden(row, False)
                 else:
-                    if self.checkBoxSampServers.isChecked():
-                        self.tableWidget.setRowHidden(row, False)
-                    else:
-                        self.tableWidget.setRowHidden(row, True)
+                    self.tableWidget.setRowHidden(row, True)
+        
         else:
+            self.checkBoxOpenMpServers.setEnabled(True)
+            self.checkBoxSampServers.setEnabled(True)
+            self.lineEdit.setEnabled(True)
             for row in range(self.tableWidget.rowCount()):
                 item = self.tableWidget.item(row, 7)
-                if item.text() == "Yes":
-                    self.tableWidget.setRowHidden(row, True)
-                else:
-                    if self.checkBoxSampServers.isChecked():
+                if self.checkBoxSampServers.isChecked() and self.checkBoxOpenMpServers.isChecked():
+                    self.tableWidget.setRowHidden(row, False)
+                elif self.checkBoxSampServers.isChecked():
+                    if item.text() == "No":
                         self.tableWidget.setRowHidden(row, False)
-                    else:
-                        self.tableWidget.setRowHidden(row, True)
+                elif self.checkBoxOpenMpServers.isChecked():
+                    if item.text() == "Yes":
+                        self.tableWidget.setRowHidden(row, False)
+                else:
+                    self.tableWidget.setRowHidden(row, True)
+                    
 
         # Check filter again
         text = self.lineEdit.text()
@@ -566,25 +715,31 @@ class Ui(QtWidgets.QMainWindow):
 
     def on_samp_check_box_state_changed(self):
         if self.checkBoxSampServers.isChecked():
-            for row in range(self.tableWidget.rowCount()):
-                item = self.tableWidget.item(row, 7)
-                if item.text() == "No":
-                    self.tableWidget.setRowHidden(row, False)
-                else:
-                    if self.checkBoxOpenMpServers.isChecked():
+            if self.checkBoxFavourites.isChecked():
+                pass
+            else:
+                for row in range(self.tableWidget.rowCount()):
+                    item = self.tableWidget.item(row, 7)
+                    if item.text() == "No":
                         self.tableWidget.setRowHidden(row, False)
                     else:
-                        self.tableWidget.setRowHidden(row, True)
+                        if self.checkBoxOpenMpServers.isChecked():
+                            self.tableWidget.setRowHidden(row, False)
+                        else:
+                            self.tableWidget.setRowHidden(row, True)
         else:
-            for row in range(self.tableWidget.rowCount()):
-                item = self.tableWidget.item(row, 7)
-                if item.text() == "No":
-                    self.tableWidget.setRowHidden(row, True)
-                else:
-                    if self.checkBoxOpenMpServers.isChecked():
-                        self.tableWidget.setRowHidden(row, False)
-                    else:
+            if self.checkBoxFavourites.isChecked():
+                pass
+            else:
+                for row in range(self.tableWidget.rowCount()):
+                    item = self.tableWidget.item(row, 7)
+                    if item.text() == "No":
                         self.tableWidget.setRowHidden(row, True)
+                    else:
+                        if self.checkBoxOpenMpServers.isChecked():
+                            self.tableWidget.setRowHidden(row, False)
+                        else:
+                            self.tableWidget.setRowHidden(row, True)
 
         # Check filter again
         text = self.lineEdit.text()

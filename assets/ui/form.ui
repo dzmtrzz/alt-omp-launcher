@@ -9,8 +9,8 @@
    <rect>
     <x>0</x>
     <y>0</y>
-    <width>892</width>
-    <height>580</height>
+    <width>624</width>
+    <height>467</height>
    </rect>
   </property>
   <property name="windowTitle">
@@ -27,7 +27,75 @@
        <enum>QFrame::Raised</enum>
       </property>
       <layout class="QGridLayout" name="gridLayout">
-       <item row="2" column="0">
+       <item row="12" column="0">
+        <widget class="QLabel" name="labelOnlineServers">
+         <property name="text">
+          <string>&lt;html&gt;&lt;head/&gt;&lt;body&gt;&lt;p&gt;Online Servers: &lt;span style=&quot; font-weight:600;&quot;&gt;-&lt;/span&gt;&lt;/p&gt;&lt;/body&gt;&lt;/html&gt;</string>
+         </property>
+         <property name="alignment">
+          <set>Qt::AlignCenter</set>
+         </property>
+        </widget>
+       </item>
+       <item row="1" column="0">
+        <widget class="QLabel" name="label">
+         <property name="styleSheet">
+          <string notr="true">QLabel {
+	font: 10pt &quot;MS Shell Dlg 2&quot;;
+	
+}</string>
+         </property>
+         <property name="text">
+          <string>Open Multiplayer Server Browser</string>
+         </property>
+         <property name="alignment">
+          <set>Qt::AlignCenter</set>
+         </property>
+        </widget>
+       </item>
+       <item row="3" column="0">
+        <widget class="QPushButton" name="pushButtonRefresh">
+         <property name="enabled">
+          <bool>true</bool>
+         </property>
+         <property name="text">
+          <string>Refresh</string>
+         </property>
+         <property name="icon">
+          <iconset>
+           <normalon>:/imagesPrefix/images/icon-refresh-24px.png</normalon>
+          </iconset>
+         </property>
+        </widget>
+       </item>
+       <item row="7" column="0">
+        <widget class="QCheckBox" name="checkBoxOpenMpServers">
+         <property name="cursor">
+          <cursorShape>ArrowCursor</cursorShape>
+         </property>
+         <property name="text">
+          <string>open.mp serversr</string>
+         </property>
+         <property name="icon">
+          <iconset>
+           <normalon>:/imagesPrefix/icons/open-mp-icon.ico</normalon>
+          </iconset>
+         </property>
+         <property name="shortcut">
+          <string/>
+         </property>
+         <property name="checkable">
+          <bool>true</bool>
+         </property>
+         <property name="checked">
+          <bool>true</bool>
+         </property>
+         <property name="tristate">
+          <bool>false</bool>
+         </property>
+        </widget>
+       </item>
+       <item row="4" column="0">
         <widget class="QTableWidget" name="tableWidget">
          <property name="acceptDrops">
           <bool>false</bool>
@@ -89,23 +157,7 @@
          </column>
         </widget>
        </item>
-       <item row="0" column="0">
-        <widget class="QLabel" name="label">
-         <property name="styleSheet">
-          <string notr="true">QLabel {
-	font: 10pt &quot;MS Shell Dlg 2&quot;;
-	
-}</string>
-         </property>
-         <property name="text">
-          <string>Open Multiplayer Server Browser</string>
-         </property>
-         <property name="alignment">
-          <set>Qt::AlignCenter</set>
-         </property>
-        </widget>
-       </item>
-       <item row="8" column="0">
+       <item row="13" column="0">
         <widget class="QLabel" name="labelOnlinePlayers">
          <property name="text">
           <string>&lt;html&gt;&lt;head/&gt;&lt;body&gt;&lt;p&gt;Online Players: &lt;span style=&quot; font-weight:600;&quot;&gt;-&lt;/span&gt;&lt;/p&gt;&lt;/body&gt;&lt;/html&gt;</string>
@@ -115,17 +167,7 @@
          </property>
         </widget>
        </item>
-       <item row="7" column="0">
-        <widget class="QLabel" name="labelOnlineServers">
-         <property name="text">
-          <string>&lt;html&gt;&lt;head/&gt;&lt;body&gt;&lt;p&gt;Online Servers: &lt;span style=&quot; font-weight:600;&quot;&gt;-&lt;/span&gt;&lt;/p&gt;&lt;/body&gt;&lt;/html&gt;</string>
-         </property>
-         <property name="alignment">
-          <set>Qt::AlignCenter</set>
-         </property>
-        </widget>
-       </item>
-       <item row="5" column="0">
+       <item row="10" column="0">
         <widget class="QCheckBox" name="checkBoxSampServers">
          <property name="text">
           <string>sa-mp servers</string>
@@ -137,49 +179,7 @@
          </property>
         </widget>
        </item>
-       <item row="4" column="0">
-        <widget class="QCheckBox" name="checkBoxOpenMpServers">
-         <property name="cursor">
-          <cursorShape>ArrowCursor</cursorShape>
-         </property>
-         <property name="text">
-          <string>open.mp servers</string>
-         </property>
-         <property name="icon">
-          <iconset>
-           <normalon>:/imagesPrefix/icons/open-mp-icon.ico</normalon>
-          </iconset>
-         </property>
-         <property name="shortcut">
-          <string/>
-         </property>
-         <property name="checkable">
-          <bool>true</bool>
-         </property>
-         <property name="checked">
-          <bool>true</bool>
-         </property>
-         <property name="tristate">
-          <bool>false</bool>
-         </property>
-        </widget>
-       </item>
-       <item row="1" column="0">
-        <widget class="QPushButton" name="pushButtonRefresh">
-         <property name="enabled">
-          <bool>true</bool>
-         </property>
-         <property name="text">
-          <string>Refresh</string>
-         </property>
-         <property name="icon">
-          <iconset>
-           <normalon>:/imagesPrefix/images/icon-refresh-24px.png</normalon>
-          </iconset>
-         </property>
-        </widget>
-       </item>
-       <item row="3" column="0">
+       <item row="5" column="0">
         <widget class="QLineEdit" name="lineEdit">
          <property name="inputMask">
           <string/>
@@ -198,6 +198,16 @@
          </property>
         </widget>
        </item>
+       <item row="6" column="0">
+        <widget class="QCheckBox" name="checkBoxFavourites">
+         <property name="text">
+          <string>Favourites</string>
+         </property>
+         <property name="checked">
+          <bool>true</bool>
+         </property>
+        </widget>
+       </item>
       </layout>
      </widget>
     </item>
@@ -208,7 +218,7 @@
     <rect>
      <x>0</x>
      <y>0</y>
-     <width>892</width>
+     <width>624</width>
      <height>21</height>
     </rect>
    </property>
