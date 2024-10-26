@@ -9,5 +9,6 @@
   </qresource>
   <qresource prefix="uiPrefix">
     <file>../form.ui</file>
+    <file>../settings.ui</file>
   </qresource>
 </RCC>

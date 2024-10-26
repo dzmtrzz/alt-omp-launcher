@@ -27,7 +27,7 @@ Special Thanks to:
   icons8.com
 """
 
-from PyQt5 import QtWidgets, QtGui, QtCore, QtTest, uic
+from PyQt5 import QtWidgets, QtGui, QtCore, QtTest, uic 
 #from PyQt5.QtWidgets import QMessageBox
 import sys
 import requests
@@ -42,17 +42,29 @@ home = Path.home()
 errormsg = ''
 
 try:
-    with open(home / "Documents" / "GTA San Andreas User Files" / "launcher-settings.json") as f:
-        data = json.load(f)
-        try:
-            if data['gamepath'] and data['omppath'] and data['username']:
-                pass
-        except Exception:
-            errormsg = 'Your settings are set incorrecly, you should have a json file called launcher-settings.json in your GTA User Files directory, which has gamepath, omppath, and username set.'
- 
-except Exception as e:
-    errormsg = f"You do not have a config file! {e}"
+    with open(home / "Documents" / "GTA San Andreas User Files" / "launcher-settings.json", "x") as f:
+        f.write('{"omppath":"", "gamepath":"","username":""}')
+        f.flush()
+except FileExistsError:
     pass
+
+with open(home / "Documents" / "GTA San Andreas User Files" / "launcher-settings.json") as f:
+    global settings 
+    settings = json.load(f)
+
+
+# try:
+#     with open(home / "Documents" / "GTA San Andreas User Files" / "launcher-settings.json") as f:
+#         data = json.load(f)
+#         try:
+#             if data['gamepath'] and data['omppath'] and data['username']:
+#                 pass
+#         except Exception as e:
+#             errormsg = "Your settings are set incorrecly, you should have a json file called launcher-settings.json in your GTA User Files directory, which has gamepath, omppath, and username set.\n {e}"
+ 
+# except Exception as e:
+#     errormsg = f"You do not have a config file! {e}"
+#     pass
 
 
 try:
@@ -116,6 +128,18 @@ class Ui(QtWidgets.QMainWindow):
             self.on_samp_check_box_state_changed)
 
         self.actionTheme.triggered.connect(self.on_triggered_action_theme)
+        self.actionSettings.triggered.connect(self.on_triggered_action_settings)
+
+        self.settingsWindow = None
+
+        if (settings['omppath'] or settings['gamepath'] or settings['username']) == '':
+            print(settings['omppath'])
+            print(settings['gamepath'])
+            print(settings['username'])
+            if self.settingsWindow == None:
+                self.settingsWindow = SettingsWindow()
+            self.settingsWindow.exec_()
+            
 
         self.current_theme = "Light"
 
@@ -150,6 +174,7 @@ class Ui(QtWidgets.QMainWindow):
 
         self.setLabelOnlineServersText(str(servers_count))
         self.setLabelOnlinePlayersText(str(players_count))
+        
 
     def addServer(
             self,
@@ -320,7 +345,17 @@ class Ui(QtWidgets.QMainWindow):
         return servers_count, players_count
 
     def filterRows(self, text: str) -> None:
-        if len(text) > 2:
+        if self.checkBoxFavourites.isChecked() == True:
+            self.checkBoxSampServers.setEnabled(False)
+            self.lineEdit.setEnabled(False)
+            for row in range(self.tableWidget.rowCount()):
+                item = self.tableWidget.item(row, 0)
+                if item.text() in self.fake_favourites:
+                    self.tableWidget.setRowHidden(row, False)
+                else:
+                    self.tableWidget.setRowHidden(row, True)
+
+        elif len(text) > 2:
             for row in range(self.tableWidget.rowCount()):
                 item = self.tableWidget.item(row, 7)
 
@@ -340,31 +375,19 @@ class Ui(QtWidgets.QMainWindow):
                     else:
                         self.tableWidget.setRowHidden(row, False)
                         break
+
         else:
-            if self.checkBoxFavourites.isChecked() == False:
-                if self.checkBoxOpenMpServers.isChecked():
-                    for row in range(self.tableWidget.rowCount()):
-                        item = self.tableWidget.item(row, 7)
-                        if item.text() == "Yes":
-                            self.tableWidget.setRowHidden(row, False)
-                        else:
-                            if self.checkBoxSampServers.isChecked():
-                                self.tableWidget.setRowHidden(row, False)
-                            else:
-                                self.tableWidget.setRowHidden(row, True)
-            else:
-                self.checkBoxOpenMpServers.setEnabled(False)
-                self.checkBoxSampServers.setEnabled(False)
-                self.lineEdit.setEnabled(False)
+            if self.checkBoxOpenMpServers.isChecked():
                 for row in range(self.tableWidget.rowCount()):
-                    item = self.tableWidget.item(row, 0)
-                    if item.text() in self.fake_favourites:
+                    item = self.tableWidget.item(row, 7)
+                    if item.text() == "Yes":
                         self.tableWidget.setRowHidden(row, False)
                     else:
-                        self.tableWidget.setRowHidden(row, True)
+                        if self.checkBoxSampServers.isChecked():
+                            self.tableWidget.setRowHidden(row, False)
+                        else:
+                            self.tableWidget.setRowHidden(row, True)
                     
-
-
 
     def checkForUpdates(self) -> None:
         """
@@ -586,10 +609,10 @@ class Ui(QtWidgets.QMainWindow):
             else:
                 try:
                     if len(cell_content):
-                        QtCore.QProcess.execute(f"{data['omppath']} -h {server_ip} -p {server_port} -n {data['username']} -g {data['gamepath']}")
+                        QtCore.QProcess.execute(f"{settings['omppath']} -h {server_ip} -p {server_port} -n {settings['username']} -g {settings['gamepath']}")
                 except Exception:
                     box = QtWidgets.QMessageBox()
-                    box.setText('even i dont know what could cause this exception - dzmtrzz')
+                    box.setText('Your settings are set up incorrectly')
                     box.exec_()
         elif item.column() == 1: # Server name column
             cell_content = item.data()
@@ -608,7 +631,12 @@ class Ui(QtWidgets.QMainWindow):
                 self.favourites_list.write(temporary)
                 self.favourites_list.truncate()
                 self.favourites_list.flush()
-                self.filterRows('') # update list
+                #self.filterRows('') # update list
+                text = self.lineEdit.text()
+                if len(text) > 2:
+                    self.filterRows(text)
+                else:
+                    self.filterRows('')
 
     def on_clicked_button_refresh(self):
         self.pushButtonRefresh.setEnabled(False)
@@ -669,8 +697,7 @@ class Ui(QtWidgets.QMainWindow):
 
         # Check filter again
         text = self.lineEdit.text()
-        if len(text) > 2:
-            self.filterRows(text)
+        self.filterRows()
 
     def get_full_column(self, colnum):
         myfunlist = []
@@ -680,6 +707,7 @@ class Ui(QtWidgets.QMainWindow):
 
     def on_favourites_check_box_state_changed(self):
         if self.checkBoxFavourites.isChecked():
+            self.filterRows('')
             self.checkBoxOpenMpServers.setEnabled(False)
             self.checkBoxSampServers.setEnabled(False)
             self.lineEdit.setEnabled(False)
@@ -709,9 +737,9 @@ class Ui(QtWidgets.QMainWindow):
                     
 
         # Check filter again
-        text = self.lineEdit.text()
-        if len(text) > 2:
-            self.filterRows(text)
+            text = self.lineEdit.text()
+            if len(text) > 2:
+                self.filterRows(text)
 
     def on_samp_check_box_state_changed(self):
         if self.checkBoxSampServers.isChecked():
@@ -752,11 +780,87 @@ class Ui(QtWidgets.QMainWindow):
         else:
             self.setThemeLightMode()
 
+    def on_triggered_action_settings(self):
+        if self.settingsWindow == None:
+            self.settingsWindow = SettingsWindow()
+        self.settingsWindow.exec_()
+
+
+class SettingsWindow(QtWidgets.QDialog):
+    def __init__(self):
+        super(SettingsWindow, self).__init__()
+
+        #load the ui
+        stream = QtCore.QFile(":/uiPrefix/settings.ui")
+        stream.open(QtCore.QFile.ReadOnly)
+        uic.loadUi(stream, self)
+        stream.close()
+
+        self.iconOpenMp = QtGui.QIcon()
+        self.iconOpenMp.addPixmap(
+        QtGui.QPixmap(":/imagesPrefix/icons/open-mp-icon.ico"),
+        QtGui.QIcon.Normal,
+        QtGui.QIcon.On)
+
+        self.setWindowTitle("Settings")
+        self.setWindowIcon(self.iconOpenMp)
+        
+        self.pushButtonOMP.clicked.connect(self.on_clicked_button_OMP)
+        self.labelOMP.setText(settings['omppath'])
+        
+        self.pushButtonGame.clicked.connect(self.on_clicked_button_game)
+        self.labelGamePath.setText(settings['gamepath'])
+
+        self.lineEditUsername.textChanged.connect(self.on_line_edit_username_changed)
+        self.lineEditUsername.setText(settings['username'])
+
+
+    def on_line_edit_username_changed(self):
+        settings['username'] = self.lineEditUsername.text()
+        with open(home / "Documents" / "GTA San Andreas User Files" / "launcher-settings.json", "w") as file:
+            file.write(json.dumps(settings, indent=4))
+            
+
+
+
+    def on_clicked_button_OMP(self):
+        try:
+            settings['omppath'] = self.file_picker("Executable files (*.exe)")[0]
+            self.labelOMP.setText(settings['omppath'])
+            with open(home / "Documents" / "GTA San Andreas User Files" / "launcher-settings.json", "w") as file:
+                file.write(json.dumps(settings, indent=4))
+        except IndexError:
+            pass
+
+    def on_clicked_button_game(self):
+        try:
+            path = str(QtWidgets.QFileDialog.getExistingDirectory(self, "Select Your GTA Folder"))
+            if path != '':
+                settings['gamepath'] = path
+                self.labelGamePath.setText(settings['gamepath'])
+                with open(home / "Documents" / "GTA San Andreas User Files" / "launcher-settings.json", "w") as file:
+                    file.write(json.dumps(settings, indent=4))
+        except IndexError:
+            pass
+        
+
+    def file_picker(self, filetype: str):
+        dlg = QtWidgets.QFileDialog()
+        dlg.setFileMode(QtWidgets.QFileDialog.AnyFile)
+        dlg.setNameFilter(filetype)
+        #filenames = QtCore.QstringList()
+
+        dlg.exec_()
+        filenames = dlg.selectedFiles()
+        return filenames
+
+
+
 
 if __name__ == '__main__':
     __version__ = "1.1.0"
 
-    CHECK_FOR_UPDATES = True
+    CHECK_FOR_UPDATES = False
 
     def detect_darkmode_in_windows() -> bool:
         try:

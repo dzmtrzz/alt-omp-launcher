@@ -228,7 +228,14 @@
     </property>
     <addaction name="actionTheme"/>
    </widget>
+   <widget class="QMenu" name="menuSettings">
+    <property name="title">
+     <string>Settings</string>
+    </property>
+    <addaction name="actionSettings"/>
+   </widget>
    <addaction name="menuAppearance"/>
+   <addaction name="menuSettings"/>
   </widget>
   <action name="actionTheme">
    <property name="icon">
@@ -238,6 +245,11 @@
    </property>
    <property name="text">
     <string>Dark Mode</string>
+   </property>
+  </action>
+  <action name="actionSettings">
+   <property name="text">
+    <string>Settings</string>
    </property>
   </action>
  </widget>

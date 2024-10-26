@@ -7,6 +7,15 @@ Currently (as far as i am aware), there isn't a launcher that supports open.mp a
 
 [Video Example](https://www.youtube.com/watch?v=gCzvV8IPk10)
 
+## How to use?
+
+If you follow [these steps](https://github.com/dzmtrzz/web/blob/patch-2/docs/client/ClientOnLinux.md), and you get your game to work with openmp's client modification, you're all set to use this launcher, assuming that your settings are set correctly. \
+The launcher will prompt you to select the file for omp-launcher.exe, the game's folder and your username if either of those are empty. \
+To connect to a server - double click the ip of that server. \
+To add a server to the favourites list - double click the name of that server. \
+To remove a server from the favourites list - double click the name of that server.
+
+
 Servers are provided from [open.mp/servers](https://www.open.mp/servers)
 
 <kbd><img src="screenshots/Screenshot-1.png" alt="Screenshot-1" border="0"></kbd>
@@ -15,6 +24,10 @@ Servers are provided from [open.mp/servers](https://www.open.mp/servers)
 
 ### Download
 - [Releases](https://github.com/dzmtrzz/alt-omp-launcher/releases)
+
+## Version 1.2.0
+- Improved user-friendliness, you can now configure the launcher through the gui.
+- A bug with the favourites tab was fixed
 
 ## Version 1.1.5
 - Added a favourites tab
