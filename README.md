@@ -15,15 +15,24 @@ To connect to a server - double click the ip of that server. \
 To add a server to the favourites list - double click the name of that server. \
 To remove a server from the favourites list - double click the name of that server.
 
+## Can i use this on windows?
+
+Yes! I don't see a reason to do so, but you can!
 
 Servers are provided from [open.mp/servers](https://www.open.mp/servers)
 
-<kbd><img src="screenshots/Screenshot-1.png" alt="Screenshot-1" border="0"></kbd>
+<kbd><img src="screenshots/MainWindow.jpeg" alt="Main Window" border="0"></kbd>
 
-<kbd><img src="screenshots/Screenshot-2.png" alt="Screenshot-2" border="0"></kbd>
+<kbd><img src="screenshots/SettingsWindow.jpeg" alt="Settings Window" border="0"></kbd>
+
+<kbd><img src="screenshots/DownloaderWindow.jpeg" alt="Downloader Window" border="0"></kbd>
 
 ### Download
 - [Releases](https://github.com/dzmtrzz/alt-omp-launcher/releases)
+
+## Version 1.2.5
+- Added a GUI downloader for open-mp client and launcher
+- Fixed a bug where clicking on the open-mp servers checkmark crashes the launcher
 
 ## Version 1.2.0
 - Improved user-friendliness, you can now configure the launcher through the gui.
