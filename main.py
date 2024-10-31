@@ -34,6 +34,8 @@ import requests
 import resources_rc
 from pathlib import Path
 import json
+import hashlib
+import os
 
 home = Path.home()
 
@@ -129,7 +131,9 @@ class Ui(QtWidgets.QMainWindow):
 
         self.actionTheme.triggered.connect(self.on_triggered_action_theme)
         self.actionSettings.triggered.connect(self.on_triggered_action_settings)
+        self.actionOMP_Downloader.triggered.connect(self.on_triggered_action_omp_downloader)
 
+        self.downloaderWindow = None
         self.settingsWindow = None
 
         if (settings['omppath'] or settings['gamepath'] or settings['username']) == '':
@@ -140,6 +144,8 @@ class Ui(QtWidgets.QMainWindow):
                 self.settingsWindow = SettingsWindow()
             self.settingsWindow.exec_()
             
+        if CHECK_FOR_OMP_PLUGIN_UPDATES == True:
+            self.checkForOpenMpUpdates()
 
         self.current_theme = "Light"
 
@@ -388,6 +394,38 @@ class Ui(QtWidgets.QMainWindow):
                         else:
                             self.tableWidget.setRowHidden(row, True)
                     
+    def checkForOpenMpUpdates(self):
+        url = "https://api.open.mp/launcher"
+        try:
+            response = requests.get(url, timeout=5)
+        except requests.exceptions.RequestException:
+            return
+        
+        if response.status_code != 200:
+            return
+
+        try:
+            data = json.loads(response.text)
+            checksum = data["ompPluginChecksum"]
+            with open(home / 'AppData' / 'Local' / 'com.open.mp' / 'omp' / 'omp-client.dll' , 'rb') as file:
+                calculated_hash = hashlib.md5(file.read()).hexdigest()
+            if calculated_hash == checksum:
+                pass
+            else:
+                errorbox = QtWidgets.QErrorMessage(self)
+                errorbox.setWindowTitle('An update for omp-client.dll is available!')
+                errorbox.showMessage('The hash of your file is not the same as the hash on the API, which usually means that it has been updated!')
+                errorbox.exec_()
+        except FileNotFoundError:
+            errorbox = QtWidgets.QErrorMessage(self)
+            errorbox.setWindowTitle('Error!')
+            errorbox.showMessage(f'The omp-client.dll file does not exist, download it through the launcher')
+            errorbox.exec_()
+        except Exception as e:
+            errorbox = QtWidgets.QErrorMessage(self)
+            errorbox.setWindowTitle('Error!')
+            errorbox.showMessage(f'Something has failed \n {e}')
+            errorbox.exec_()
 
     def checkForUpdates(self) -> None:
         """
@@ -477,7 +515,11 @@ class Ui(QtWidgets.QMainWindow):
         self.actionTheme.setIcon(icon)
 
         self.setStyleSheet(
-            """QWidget {
+            """
+            * {
+                font-family: "Verdana"
+            }
+            QWidget {
                 background-color: rgb(76, 76, 76);
             }
             QMenu {
@@ -578,7 +620,11 @@ class Ui(QtWidgets.QMainWindow):
             QtGui.QIcon.On)
         self.actionTheme.setIcon(icon)
 
-        self.setStyleSheet("")
+        self.setStyleSheet("""
+            * {
+                font-family: "Verdana"
+            }
+            """)
 
         icon = QtGui.QIcon()
         icon.addPixmap(
@@ -697,7 +743,7 @@ class Ui(QtWidgets.QMainWindow):
 
         # Check filter again
         text = self.lineEdit.text()
-        self.filterRows()
+        self.filterRows(text)
 
     def get_full_column(self, colnum):
         myfunlist = []
@@ -785,6 +831,10 @@ class Ui(QtWidgets.QMainWindow):
             self.settingsWindow = SettingsWindow()
         self.settingsWindow.exec_()
 
+    def on_triggered_action_omp_downloader(self):
+        if self.downloaderWindow == None:
+            self.downloaderWindow = DownloaderWindow()
+        self.downloaderWindow.exec_()
 
 class SettingsWindow(QtWidgets.QDialog):
     def __init__(self):
@@ -818,10 +868,7 @@ class SettingsWindow(QtWidgets.QDialog):
     def on_line_edit_username_changed(self):
         settings['username'] = self.lineEditUsername.text()
         with open(home / "Documents" / "GTA San Andreas User Files" / "launcher-settings.json", "w") as file:
-            file.write(json.dumps(settings, indent=4))
-            
-
-
+            file.write(json.dumps(settings, indent=4))          
 
     def on_clicked_button_OMP(self):
         try:
@@ -843,7 +890,6 @@ class SettingsWindow(QtWidgets.QDialog):
         except IndexError:
             pass
         
-
     def file_picker(self, filetype: str):
         dlg = QtWidgets.QFileDialog()
         dlg.setFileMode(QtWidgets.QFileDialog.AnyFile)
@@ -855,11 +901,85 @@ class SettingsWindow(QtWidgets.QDialog):
         return filenames
 
 
+class DownloaderWindow(QtWidgets.QDialog):
+    def __init__(self):
+        super(DownloaderWindow, self).__init__()
+
+        #load the ui
+        stream = QtCore.QFile(":/uiPrefix/downloader.ui")
+        stream.open(QtCore.QFile.ReadOnly)
+        uic.loadUi(stream, self)
+        stream.close()
+        
+        self.iconOpenMp = QtGui.QIcon()
+        self.iconOpenMp.addPixmap(
+        QtGui.QPixmap(":/imagesPrefix/icons/open-mp-icon.ico"),
+        QtGui.QIcon.Normal,
+        QtGui.QIcon.On)
+
+        self.setWindowTitle("OMP Downloader")
+        self.setWindowIcon(self.iconOpenMp)
+
+        self.pushButtonClient.clicked.connect(self.on_clicked_button_client)
+        self.pushButtonLauncher.clicked.connect(self.on_clicked_button_launcher)
+
+    def on_clicked_button_client(self):
+        destination_path = home / "AppData" / "Local" / "com.open.mp" / "omp"
+        url = 'https://assets.open.mp/omp-client.dll'
+        try:
+            os.makedirs(destination_path, exist_ok=True)
+            response = requests.get(url)
+            if response.status_code == 200:
+                with open(destination_path / "omp-client.dll", "wb") as file:
+                    file.write(response.content)
+                messagebox = QtWidgets.QMessageBox()
+                messagebox.setWindowTitle("Success!")
+                messagebox.setText("File donwloaded successfully!")
+                messagebox.exec_()
+            else:
+                messagebox = QtWidgets.QMessageBox()
+                messagebox.setWindowTitle("Failed")
+                messagebox.setText("The api couldn't be reached.")
+                messagebox.exec_()
+        except Exception as e:
+            messagebox = QtWidgets.QMessageBox()
+            messagebox.setWindowTitle('Something went wrong!')
+            messagebox.setText(f"Something went wrong! \n {e}")
+            messagebox.exec_()
+
+    def on_clicked_button_launcher(self):
+        destination_path = home / "AppData" / "Local" / "com.open.mp" / "omp"
+        latest = 'https://api.github.com/repos/openmultiplayer/launcher/releases/latest'
+        try:
+            os.makedirs(destination_path, exist_ok=True)
+            response = requests.get(latest)
+            data = response.json()
+            url = data['assets'][1]['browser_download_url']
+            launcher = requests.get(url)
+            if response.status_code == 200:
+                with open(destination_path / "omp-launcher.exe", "wb") as file:
+                    file.write(launcher.content)
+                messagebox = QtWidgets.QMessageBox()
+                messagebox.setWindowTitle("Success!")
+                messagebox.setText(f"Downloaded to {destination_path / 'omp-launcher.exe'}")
+                messagebox.exec_()
+            else:
+                messagebox = QtWidgets.QMessageBox()
+                messagebox.setWindowTitle("Failed")
+                messagebox.setText("The api couldn't be reached.")
+                messagebox.exec_()
+        except Exception as e:
+            messagebox = QtWidgets.QMessageBox()
+            messagebox.setWindowTitle('Something went wrong!')
+            messagebox.setText(f"Something went wrong! \n {e}")
+            messagebox.exec_()
+            
 
 
 if __name__ == '__main__':
     __version__ = "1.1.0"
 
+    CHECK_FOR_OMP_PLUGIN_UPDATES = True
     CHECK_FOR_UPDATES = False
 
     def detect_darkmode_in_windows() -> bool:

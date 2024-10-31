@@ -13,6 +13,11 @@
     <height>467</height>
    </rect>
   </property>
+  <property name="font">
+   <font>
+    <family>Verdana</family>
+   </font>
+  </property>
   <property name="windowTitle">
    <string>MainWindow</string>
   </property>
@@ -39,6 +44,15 @@
        </item>
        <item row="1" column="0">
         <widget class="QLabel" name="label">
+         <property name="font">
+          <font>
+           <family>MS Shell Dlg 2</family>
+           <pointsize>10</pointsize>
+           <weight>50</weight>
+           <italic>false</italic>
+           <bold>false</bold>
+          </font>
+         </property>
          <property name="styleSheet">
           <string notr="true">QLabel {
 	font: 10pt &quot;MS Shell Dlg 2&quot;;
@@ -219,8 +233,14 @@
      <x>0</x>
      <y>0</y>
      <width>624</width>
-     <height>21</height>
+     <height>19</height>
     </rect>
+   </property>
+   <property name="font">
+    <font>
+     <family>Verdana</family>
+     <pointsize>8</pointsize>
+    </font>
    </property>
    <widget class="QMenu" name="menuAppearance">
     <property name="title">
@@ -233,6 +253,7 @@
      <string>Settings</string>
     </property>
     <addaction name="actionSettings"/>
+    <addaction name="actionOMP_Downloader"/>
    </widget>
    <addaction name="menuAppearance"/>
    <addaction name="menuSettings"/>
@@ -246,10 +267,25 @@
    <property name="text">
     <string>Dark Mode</string>
    </property>
+   <property name="font">
+    <font>
+     <family>Verdana</family>
+    </font>
+   </property>
   </action>
   <action name="actionSettings">
    <property name="text">
     <string>Settings</string>
+   </property>
+   <property name="font">
+    <font>
+     <family>Verdana</family>
+    </font>
+   </property>
+  </action>
+  <action name="actionOMP_Downloader">
+   <property name="text">
+    <string>OMP Downloader</string>
    </property>
   </action>
  </widget>
