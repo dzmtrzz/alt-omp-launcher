@@ -1,3 +1,6 @@
+# Announcment
+As of May 16 2025 the launcher *mostly* works, but i have lost interest in maintaining it and therefore am archiving it.
+
 # Alternative open.mp Launcher
 A fork of omp-server-browser which allows you to add favourites, connect to servers while using the omp-launcher, aimed to work on wine.
 
